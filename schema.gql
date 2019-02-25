@@ -1,0 +1,122 @@
+input PhotoFilter {
+    category: PhotoCategory
+    createdBetween: DateRange
+    taggedUsers: [ID!]
+    searchText: String
+}
+
+input DateRange {
+    start: DateTime!
+    end: DateTime!
+}
+
+input DataPage {
+    first: Int = 25
+    start: Int = 0
+}
+
+input DataSort {
+    sort: SortDirection = DESCENDING
+    sortBy: SortablePhotoField = created
+}
+
+input PostPhotoInput {
+    name: String!
+    description: String
+    category: PhotoCategory=PORTRAIT
+}
+
+type User {
+    githubLogin: ID!
+    name: String
+    avatar: String
+    postedPhotos(filter:PhotoFilter paging:DataPage sorting:DataSort): [Photo!]!
+    inPhotos(filter:PhotoFilter paging:DataPage sorting:DataSort): [Photo!]!
+}
+
+type Photo {
+    id: ID!
+    name: String!
+    url: String!
+    description: String
+    category: PhotoCategory!
+    postedBy: User!
+    taggedUsers(sorting:DataSort): [User!]!
+}
+
+type Query {
+    totalPhotos: Int!
+    allUsers(paging:DataPage sorting:DataSort): [User!]!
+    allPhotos(filter:PhotoFilter paging:DataPage sorting:DataSort): [Photo!]!
+    totalUsers: Int!
+    User(githubLogin: ID!): User!
+    Photo(id: ID!): Photo!
+}
+
+type AuthPayload {
+    user: User!
+    token: String!
+}
+
+enum PhotoCategory {
+    SEFLIE
+    PORTRAIT
+    ACTION
+    LANDSCAPE
+    GRAPHIC
+}
+
+enum SortDirection {
+    ASCENDING
+    DESCENDING
+}
+
+enum SortablePhotoField {
+    name
+    description
+    category
+    created
+}
+
+type Mutation {
+    addFakeUsers(count: Int = 1): [User!]!
+    postPhoto(input: PostPhotoInput!): Photo!
+    githubAuth(code: String!): AuthPayload!
+}
+
+type Subscription {
+    newPhoto: Photo!
+    newUser: User!
+}
+
+query {
+    totalPhotos
+    allUsers
+    totalUsers
+    allPhotos(sortBy: name) {
+        name
+        url
+    }
+}
+
+query currentUser {
+    me {
+        githubLogin
+        name
+        avatar
+    }
+}
+
+query getPhotos($filter:PhotoFilter $page:DataPage $sort:DataSort) {
+    allPhotos(filter:$filter paging:$page sorting:$sort) {
+        id
+        name
+        url
+    }
+}
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
